@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>valentine.exe</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --accent: #ff4d8d;
+      --accent2: #7c5cff;
+      --good: #46ffa6;
+      --danger: #ff5b5b;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background: radial-gradient(1200px 900px at 15% 20%, rgba(124,92,255,.35), transparent 60%),
+                  radial-gradient(1000px 800px at 85% 30%, rgba(255,77,141,.30), transparent 55%),
+                  radial-gradient(900px 700px at 40% 90%, rgba(70,255,166,.18), transparent 55%),
+                  var(--bg);
+      overflow: hidden;
+    }
+
+    /* Optional background image/GIF: add your url here */
+    .bg {
+      position: fixed; inset: 0;
+      background-image: none; /* e.g. url('https://media.giphy.com/media/l0HlO7p1y1qM0KZy8/giphy.gif') */
+      background-size: cover;
+      background-position: center;
+      filter: blur(12px) saturate(1.15) brightness(.65);
+      transform: scale(1.08);
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    .wrap {
+      position: relative;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+
+    .card {
+      width: min(720px, 100%);
+      background: linear-gradient(180deg, var(--card2), var(--card));
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+
+    .dots { display: flex; gap: 8px; }
+    .dot { width: 10px; height: 10px; border-radius: 999px; opacity: .85; }
+    .dot.red { background: #ff5b5b; }
+    .dot.yellow { background: #ffd05b; }
+    .dot.green { background: #46ffa6; }
+
+    .title {
+      font-family: var(--mono);
+      font-size: 13px;
+      opacity: .9;
+    }
+
+    .content {
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .headline {
+      display: grid;
+      gap: 8px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 30px);
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 15px;
+    }
+
+    .terminal {
+      background: rgba(0,0,0,.32);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.55;
+      position: relative;
+      overflow: hidden;
+    }
+    .terminal:before {
+      content: "";
+      position: absolute; inset: -120px -80px;
+      background: radial-gradient(circle at 30% 20%, rgba(255,77,141,.20), transparent 55%),
+                  radial-gradient(circle at 70% 40%, rgba(124,92,255,.20), transparent 55%);
+      filter: blur(18px);
+      opacity: .85;
+      pointer-events: none;
+    }
+    .term-line { position: relative; }
+    .prompt { color: rgba(70,255,166,.95); }
+    .cmd { color: rgba(255,255,255,.92); }
+    .hint { color: rgba(255,255,255,.65); }
+
+    .cta {
+      display: grid;
+      gap: 12px;
+    }
+
+    .question {
+      font-size: 16px;
+      color: rgba(255,255,255,.88);
+    }
+
+    .btnrow {
+      position: relative;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding-bottom: 6px;
+      min-height: 56px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-weight: 700;
+      letter-spacing: .01em;
+      color: rgba(255,255,255,.94);
+      transition: transform .08s ease, filter .12s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active { transform: scale(.98); }
+
+    #yesBtn {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      box-shadow: 0 12px 35px rgba(255,77,141,.18);
+    }
+    #yesBtn:hover { filter: brightness(1.07); }
+
+    #noBtn {
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.16);
+      position: absolute; /* lets it jump around within btnrow */
+      left: 160px;
+      top: 0px;
+    }
+    #noBtn:hover { filter: brightness(1.06); }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      color: rgba(255,255,255,.60);
+      font-size: 12px;
+      font-family: var(--mono);
+      border-top: 1px solid rgba(255,255,255,.10);
+      padding: 14px 16px;
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,.18);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+    }
+
+    /* success screen */
+    .success {
+      display: none;
+      padding: 34px 22px 26px;
+      text-align: center;
+      gap: 16px;
+    }
+    .success h2 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      letter-spacing: -0.02em;
+    }
+    .success p {
+      margin: 0;
+      color: rgba(255,255,255,.78);
+      line-height: 1.55;
+    }
+    .big-heart {
+      font-size: 44px;
+      filter: drop-shadow(0 12px 30px rgba(255,77,141,.25));
+    }
+
+    canvas#confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .small {
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      margin-top: 8px;
+    }
+
+    .link {
+      color: rgba(255,255,255,.80);
+      text-decoration: none;
+      border-bottom: 1px dotted rgba(255,255,255,.35);
+    }
+    .link:hover { color: rgba(255,255,255,.95); }
+  </style>
+</head>
+
+<body>
+  <div class="bg" id="bg"></div>
+  <canvas id="confetti"></canvas>
+
+  <div class="wrap">
+    <div class="card" id="card">
+      <div class="topbar">
+        <div class="dots" aria-hidden="true">
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green"></div>
+        </div>
+        <div class="title">valentine.exe — stable build</div>
+      </div>
+
+      <div class="content" id="main">
+        <div class="headline">
+          <h1>Hey <span id="herName">love</span>, I shipped a feature 🚀</h1>
+          <p class="sub">
+            It passed QA, survived prod, and the only remaining requirement is your approval.
+          </p>
+        </div>
+
+        <div class="terminal" aria-label="terminal">
+          <div class="term-line"><span class="prompt">$</span> <span class="cmd">git checkout -b be-my-valentine</span></div>
+          <div class="term-line"><span class="prompt">$</span> <span class="cmd">npm run ask</span></div>
+          <div class="term-line"><span class="hint" id="typed"></span><span class="hint" id="cursor">▍</span></div>
+        </div>
+
+        <div class="cta">
+          <div class="question">Would you like to be my Valentine?</div>
+          <div class="btnrow" id="arena">
+            <button id="yesBtn">Yes 💖</button>
+            <button id="noBtn">No 🙃</button>
+          </div>
+          <div class="small">
+            P.S. The “No” option is… under active maintenance.
+          </div>
+        </div>
+      </div>
+
+      <div class="success" id="success">
+        <div class="big-heart">💘</div>
+        <h2>Merge approved.</h2>
+        <p>
+          Thank you for being my Valentine — our first one together.<br />
+          I’m stupid grateful to have you.
+        </p>
+        <p class="small">
+          <span class="pill">status: committed</span>
+          <span class="pill">branch: us</span>
+          <span class="pill">deploy: tonight</span>
+        </p>
+      </div>
+
+      <div class="footer">
+        <div class="pill" id="buildTag">build: v1.0.0</div>
+        <div>
+          <span class="pill">made with ❤️ + a little JS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * EASY CUSTOMIZATION
+     ***********************/
+    // 1) Put her name here:
+    const HER_NAME = "Zohal"; // change me (or leave "love")
+    // 2) Optional: add a blurred background image/GIF URL:
+    const BG_IMAGE_URL = ""; // e.g. "https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif"
+    // 3) Optional: change success message:
+    const SUCCESS_TITLE = "Merge approved.";
+    const SUCCESS_TEXT = "Thank you for being my Valentine — our first one together.\nI’m stupid grateful to have you.";
+
+    const herNameEl = document.getElementById("herName");
+    herNameEl.textContent = (HER_NAME || "love");
+
+    const bg = document.getElementById("bg");
+    if (BG_IMAGE_URL) bg.style.backgroundImage = `url('${BG_IMAGE_URL}')`;
+
+    const typedEl = document.getElementById("typed");
+    const cursorEl = document.getElementById("cursor");
+
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+    const arena = document.getElementById("arena");
+
+    const main = document.getElementById("main");
+    const success = document.getElementById("success");
+
+    // Persist acceptance (if she refreshes)
+    const KEY = "valentineAccepted";
+    if (localStorage.getItem(KEY) === "yes") showSuccess(false);
+
+    // Typewriter effect
+    const message = `Initializing romantic-protocol...\nRunning tests: ✅\nFinal prompt: ${HER_NAME || "love"}, will you be my Valentine?`;
+    typewriter(message, typedEl, 18);
+
+    function typewriter(text, el, speed) {
+      let i = 0;
+      const lines = text.split("\n");
+      const full = lines.join("\n");
+      const tick = () => {
+        i++;
+        el.textContent = full.slice(0, i);
+        if (i < full.length) {
+          setTimeout(tick, speed);
+        } else {
+          // blink cursor
+          setInterval(() => cursorEl.style.opacity = (cursorEl.style.opacity === "0" ? "1" : "0"), 520);
+        }
+      };
+      tick();
+    }
+
+    // Keep no button inside the arena
+    function randomPosition() {
+      const rect = arena.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      const padding = 6;
+      const maxX = rect.width - btnRect.width - padding;
+      const maxY = rect.height - btnRect.height - padding;
+
+      const x = clamp(Math.random() * maxX, padding, maxX);
+      const y = clamp(Math.random() * maxY, padding, maxY);
+
+      noBtn.style.left = `${x}px`;
+      noBtn.style.top = `${y}px`;
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    // Initialize "No" position after layout
+    requestAnimationFrame(() => {
+      // place it to the right of Yes by default
+      const yesRect = yesBtn.getBoundingClientRect();
+      const arenaRect = arena.getBoundingClientRect();
+      const startX = (yesRect.left - arenaRect.left) + yesRect.width + 12;
+      noBtn.style.left = `${clamp(startX, 6, arenaRect.width - noBtn.offsetWidth - 6)}px`;
+      noBtn.style.top = `0px`;
+    });
+
+    // Mouse-based "run away" logic
+    document.addEventListener("mousemove", (e) => {
+      if (localStorage.getItem(KEY) === "yes") return;
+      const btnRect = noBtn.getBoundingClientRect();
+      const dist = distanceToRect(e.clientX, e.clientY, btnRect);
+
+      // threshold in px: how close you get before it flees
+      if (dist < 90) randomPosition();
+    }, { passive: true });
+
+    // Touch-based "run away" logic for phones
+    // If finger touches near the "No" button, it jumps.
+    document.addEventListener("touchstart", (e) => {
+      if (localStorage.getItem(KEY) === "yes") return;
+      const t = e.touches[0];
+      if (!t) return;
+      const btnRect = noBtn.getBoundingClientRect();
+      const dist = distanceToRect(t.clientX, t.clientY, btnRect);
+      if (dist < 110) randomPosition();
+    }, { passive: true });
+
+    // If she somehow clicks No, make it playful
+    noBtn.addEventListener("click", () => {
+      randomPosition();
+      flashBuildTag("Nice try 😈", true);
+    });
+
+    yesBtn.addEventListener("click", () => {
+      localStorage.setItem(KEY, "yes");
+      showSuccess(true);
+      burstConfetti();
+    });
+
+    function showSuccess(animate = true) {
+      main.style.display = "none";
+      success.style.display = "grid";
+      success.querySelector("h2").textContent = SUCCESS_TITLE;
+      success.querySelector("p").innerHTML = SUCCESS_TEXT.replaceAll("\n", "<br/>");
+      if (animate) flashBuildTag("build: ❤️ shipped", false);
+    }
+
+    function flashBuildTag(text, danger) {
+      const el = document.getElementById("buildTag");
+      const original = el.textContent;
+      el.textContent = text;
+      el.style.borderColor = danger ? "rgba(255,91,91,.55)" : "rgba(70,255,166,.55)";
+      el.style.background = danger ? "rgba(255,91,91,.12)" : "rgba(70,255,166,.10)";
+      setTimeout(() => {
+        el.textContent = original;
+        el.style.borderColor = "rgba(255,255,255,.18)";
+        el.style.background = "rgba(255,255,255,.06)";
+      }, 950);
+    }
+
+    function distanceToRect(x, y, rect) {
+      const dx = Math.max(rect.left - x, 0, x - rect.right);
+      const dy = Math.max(rect.top - y, 0, y - rect.bottom);
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    /***********************
+     * Confetti (tiny, no libs)
+     ***********************/
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    let W, H;
+    function resize() {
+      W = canvas.width = window.innerWidth * devicePixelRatio;
+      H = canvas.height = window.innerHeight * devicePixelRatio;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+    }
+    // safer resize without cumulative scaling
+    function hardResize() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    window.addEventListener("resize", hardResize, { passive: true });
+    hardResize();
+
+    let pieces = [];
+    function burstConfetti() {
+      const count = 160;
+      pieces = [];
+      for (let i = 0; i < count; i++) {
+        pieces.push({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+          vx: (Math.random() - 0.5) * 10,
+          vy: (Math.random() - 0.8) * 12,
+          g: 0.18 + Math.random() * 0.18,
+          r: 2 + Math.random() * 4,
+          a: 1,
+          spin: (Math.random() - 0.5) * 0.4,
+          rot: Math.random() * Math.PI,
+        });
+      }
+      requestAnimationFrame(tickConfetti);
+    }
+
+    function tickConfetti() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      let alive = 0;
+
+      for (const p of pieces) {
+        p.vy += p.g;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.spin;
+        p.a -= 0.008;
+
+        if (p.a > 0 && p.y < window.innerHeight + 40) alive++;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(p.a, 0);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+
+        // draw tiny hearts/squares mix
+        if (Math.random() < 0.25) {
+          drawHeart(ctx, 0, 0, p.r * 2.2);
+        } else {
+          ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
+        }
+
+        ctx.restore();
+      }
+
+      if (alive > 0) requestAnimationFrame(tickConfetti);
+    }
+
+    function drawHeart(c, x, y, s) {
+      c.beginPath();
+      c.moveTo(x, y + s / 4);
+      c.bezierCurveTo(x, y, x - s / 2, y, x - s / 2, y + s / 4);
+      c.bezierCurveTo(x - s / 2, y + s / 2, x, y + s * 0.75, x, y + s);
+      c.bezierCurveTo(x, y + s * 0.75, x + s / 2, y + s / 2, x + s / 2, y + s / 4);
+      c.bezierCurveTo(x + s / 2, y, x, y, x, y + s / 4);
+      c.closePath();
+      c.fill();
+    }
+  </script>
+</body>
+</html>
