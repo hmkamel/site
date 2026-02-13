@@ -13,8 +13,6 @@
       --muted: rgba(255,255,255,.70);
       --accent: #ff4d8d;
       --accent2: #7c5cff;
-      --good: #46ffa6;
-      --danger: #ff5b5b;
       --shadow: 0 18px 60px rgba(0,0,0,.45);
       --radius: 18px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -60,6 +58,7 @@
       box-shadow: var(--shadow);
       overflow: hidden;
       backdrop-filter: blur(14px);
+      position: relative;
     }
 
     .topbar {
@@ -68,6 +67,8 @@
       justify-content: space-between;
       padding: 14px 16px;
       border-bottom: 1px solid rgba(255,255,255,.10);
+      position: relative;
+      z-index: 3;
     }
 
     .dots { display: flex; gap: 8px; }
@@ -86,12 +87,11 @@
       padding: 22px;
       display: grid;
       gap: 18px;
+      position: relative;
+      z-index: 2;
     }
 
-    .headline {
-      display: grid;
-      gap: 8px;
-    }
+    .headline { display: grid; gap: 8px; }
     h1 {
       margin: 0;
       font-size: clamp(22px, 3vw, 30px);
@@ -107,8 +107,8 @@
     /* ✅ Responsive banner that NEVER crops the GIF */
     .gif-banner{
       width:100%;
-      height: min(260px, 28vh);  /* grows/shrinks across desktop/phone */
-      object-fit: contain;        /* show full cat */
+      height: min(260px, 28vh);
+      object-fit: contain;
       object-position: center;
       background: rgba(0,0,0,.25);
       border-radius: 14px;
@@ -142,7 +142,7 @@
     .cmd { color: rgba(255,255,255,.92); }
     .hint { color: rgba(255,255,255,.65); }
 
-    .cta { display: grid; gap: 12px; }
+    .cta { display: grid; gap: 12px; position: relative; }
     .question { font-size: 16px; color: rgba(255,255,255,.88); }
 
     .btnrow {
@@ -166,6 +166,8 @@
       transition: transform .08s ease, filter .12s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      position: relative;
+      z-index: 4;
     }
     button:active { transform: scale(.98); }
 
@@ -175,14 +177,27 @@
     }
     #yesBtn:hover { filter: brightness(1.07); }
 
+    /* Floating "No" button */
     #noBtn {
       background: rgba(255,255,255,.10);
       border: 1px solid rgba(255,255,255,.16);
       position: absolute;
-      left: 160px;
-      top: 0px;
+      left: 0;
+      top: 0;
+      z-index: 10;
     }
     #noBtn:hover { filter: brightness(1.06); }
+
+    /* ✅ Roam ONLY inside the CTA (question area) */
+    #noLayer {
+      position: absolute;
+      inset: 0;
+      z-index: 9;
+      pointer-events: none;
+    }
+    #noLayer button { pointer-events: auto; }
+
+    .small { font-size: 12px; color: rgba(255,255,255,.62); margin-top: 8px; }
 
     .footer {
       display: flex;
@@ -195,6 +210,8 @@
       font-family: var(--mono);
       border-top: 1px solid rgba(255,255,255,.10);
       padding: 14px 16px;
+      position: relative;
+      z-index: 3;
     }
 
     .pill {
@@ -209,28 +226,32 @@
       padding: 34px 22px 26px;
       text-align: center;
       gap: 16px;
+      position: relative;
+      z-index: 2;
     }
-    .success h2 {
-      margin: 0;
-      font-size: clamp(22px, 3vw, 34px);
-      letter-spacing: -0.02em;
-    }
-    .success p {
-      margin: 0;
-      color: rgba(255,255,255,.78);
-      line-height: 1.55;
-    }
-    .big-heart {
-      font-size: 44px;
-      filter: drop-shadow(0 12px 30px rgba(255,77,141,.25));
-    }
+    .success h2 { margin: 0; font-size: clamp(22px, 3vw, 34px); letter-spacing: -0.02em; }
+    .success p { margin: 0; color: rgba(255,255,255,.78); line-height: 1.55; }
+    .big-heart { font-size: 44px; filter: drop-shadow(0 12px 30px rgba(255,77,141,.25)); }
 
+    /* Keep canvas but we won't use it (safe) */
     canvas#confetti { position: fixed; inset: 0; pointer-events: none; }
 
-    .small {
-      font-size: 12px;
-      color: rgba(255,255,255,.62);
-      margin-top: 8px;
+    /* ✅ Lightweight fireworks GIF overlay (no lag) */
+    #fxOverlay{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 999;
+    }
+    #fxOverlay img{
+      width: min(820px, 92vw);
+      height: auto;
+      border-radius: 18px;
+      opacity: 0.92;
+      filter: drop-shadow(0 18px 55px rgba(0,0,0,.45));
     }
   </style>
 </head>
@@ -238,6 +259,11 @@
 <body>
   <div class="bg" id="bg"></div>
   <canvas id="confetti"></canvas>
+
+  <!-- Fireworks overlay -->
+  <div id="fxOverlay" aria-hidden="true">
+    <img id="fxGif" src="" alt="">
+  </div>
 
   <div class="wrap">
     <div class="card" id="card">
@@ -268,12 +294,17 @@
           <div class="term-line"><span class="hint" id="typed"></span><span class="hint" id="cursor">▍</span></div>
         </div>
 
-        <div class="cta">
-          <div class="question">Would you like to be my Valentine?</div>
-          <div class="btnrow" id="arena">
-            <button id="yesBtn">Yes 💖</button>
+        <div class="cta" id="ctaArea">
+          <div id="noLayer">
             <button id="noBtn">No 🙃</button>
           </div>
+
+          <div class="question">Would you like to be my Valentine?</div>
+
+          <div class="btnrow">
+            <button id="yesBtn">Yes 💖</button>
+          </div>
+
           <div class="small">P.S. The “No” option is… under active maintenance.</div>
         </div>
       </div>
@@ -305,29 +336,39 @@
     const SUCCESS_TITLE = "Merge approved.";
     const SUCCESS_TEXT = "Thank you for being my Valentine — our first one together.\nI’m stupid grateful to have you.";
 
+    // ✅ Fireworks GIF (used as SUCCESS BACKGROUND)
+    const FIREWORKS_GIF_URL = "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExOG94dHJwMjIzaDJqeGVnbnphMnE4dHFhcTBoMTRtNXl6NHF1eHJ5YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/HbWB5ayYihkBy/giphy.gif";
+
     document.getElementById("herName").textContent = (HER_NAME || "love");
     const bg = document.getElementById("bg");
+    const bannerGif = document.querySelector(".gif-banner");
     if (BG_IMAGE_URL) bg.style.backgroundImage = `url('${BG_IMAGE_URL}')`;
 
     const typedEl = document.getElementById("typed");
     const cursorEl = document.getElementById("cursor");
+
     const yesBtn = document.getElementById("yesBtn");
     const noBtn = document.getElementById("noBtn");
-    const arena = document.getElementById("arena");
+    const noLayer = document.getElementById("noLayer");
+    const ctaArea = document.getElementById("ctaArea");
+
     const main = document.getElementById("main");
     const success = document.getElementById("success");
+
+    // Fireworks overlay elements
+    const fxOverlay = document.getElementById("fxOverlay");
+    const fxGif = document.getElementById("fxGif");
 
     const KEY = "valentineAccepted";
     if (localStorage.getItem(KEY) === "yes") showSuccess(false);
 
-    // Dev reset: press R to reset (only on your machine)
-document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "r") {
-    localStorage.removeItem(KEY);
-    location.reload();
-  }
-});
-
+    // Dev reset: press R to reset (remove if you want)
+    document.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "r") {
+        localStorage.removeItem(KEY);
+        location.reload();
+      }
+    });
 
     const message = `Initializing romantic-protocol...\nRunning tests: ✅\nFinal prompt: ${HER_NAME || "love"}, will you be my Valentine?`;
     typewriter(message, typedEl, 18);
@@ -346,30 +387,57 @@ document.addEventListener("keydown", (e) => {
 
     function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
-    function randomPosition() {
-      const rect = arena.getBoundingClientRect();
-      const btnRect = noBtn.getBoundingClientRect();
-      const padding = 6;
-      const maxX = rect.width - btnRect.width - padding;
-      const maxY = rect.height - btnRect.height - padding;
-      const x = clamp(Math.random() * maxX, padding, maxX);
-      const y = clamp(Math.random() * maxY, padding, maxY);
-      noBtn.style.left = `${x}px`;
-      noBtn.style.top = `${y}px`;
+    // Keep it inside CTA and away from Yes area
+    const EDGE_PAD = 8;
+    const SAFE_RADIUS = 150;
+
+    function overlapsRect(a, b) {
+      return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
     }
 
-    requestAnimationFrame(() => {
+    function placeNoInCtaAwayFromYes() {
+      const layerRect = ctaArea.getBoundingClientRect();
       const yesRect = yesBtn.getBoundingClientRect();
-      const arenaRect = arena.getBoundingClientRect();
-      const startX = (yesRect.left - arenaRect.left) + yesRect.width + 12;
-      noBtn.style.left = `${clamp(startX, 6, arenaRect.width - noBtn.offsetWidth - 6)}px`;
-      noBtn.style.top = `0px`;
-    });
+
+      const btnW = noBtn.offsetWidth;
+      const btnH = noBtn.offsetHeight;
+
+      const maxX = layerRect.width - btnW - EDGE_PAD;
+      const maxY = layerRect.height - btnH - EDGE_PAD;
+
+      const tries = 50;
+      for (let i = 0; i < tries; i++) {
+        const x = clamp(EDGE_PAD + Math.random() * maxX, EDGE_PAD, maxX);
+        const y = clamp(EDGE_PAD + Math.random() * maxY, EDGE_PAD, maxY);
+
+        const candidate = {
+          left: layerRect.left + x,
+          top: layerRect.top + y,
+          right: layerRect.left + x + btnW,
+          bottom: layerRect.top + y + btnH
+        };
+
+        if (overlapsRect(candidate, yesRect)) continue;
+
+        const cx = (candidate.left + candidate.right) / 2;
+        const cy = (candidate.top + candidate.bottom) / 2;
+        const yx = (yesRect.left + yesRect.right) / 2;
+        const yy = (yesRect.top + yesRect.bottom) / 2;
+        if (Math.hypot(cx - yx, cy - yy) < SAFE_RADIUS) continue;
+
+        noBtn.style.left = `${x}px`;
+        noBtn.style.top = `${y}px`;
+        return;
+      }
+
+      noBtn.style.left = `${EDGE_PAD}px`;
+      noBtn.style.top = `${EDGE_PAD}px`;
+    }
 
     document.addEventListener("mousemove", (e) => {
       if (localStorage.getItem(KEY) === "yes") return;
       const btnRect = noBtn.getBoundingClientRect();
-      if (distanceToRect(e.clientX, e.clientY, btnRect) < 90) randomPosition();
+      if (distanceToRect(e.clientX, e.clientY, btnRect) < 90) placeNoInCtaAwayFromYes();
     }, { passive: true });
 
     document.addEventListener("touchstart", (e) => {
@@ -377,22 +445,52 @@ document.addEventListener("keydown", (e) => {
       const t = e.touches[0];
       if (!t) return;
       const btnRect = noBtn.getBoundingClientRect();
-      if (distanceToRect(t.clientX, t.clientY, btnRect) < 110) randomPosition();
+      if (distanceToRect(t.clientX, t.clientY, btnRect) < 110) placeNoInCtaAwayFromYes();
     }, { passive: true });
 
-    noBtn.addEventListener("click", () => { randomPosition(); flashBuildTag("Nice try 😈", true); });
+    noBtn.addEventListener("click", () => {
+      placeNoInCtaAwayFromYes();
+      flashBuildTag("Nice try 😈", true);
+    });
+
+    // ✅ Lightweight GIF overlay (no lag)
+    function cacheBust(url){
+      const sep = url.includes("?") ? "&" : "?";
+      return url + sep + "v=" + Date.now();
+    }
+
+    // (Overlay function kept for safety but no longer used;
+    //  we now switch the whole background to the fireworks GIF instead)
+    function playFireworksGif(durationMs = 2400){
+      if (!FIREWORKS_GIF_URL) return;
+      fxGif.src = cacheBust(FIREWORKS_GIF_URL);
+      fxOverlay.style.display = "flex";
+      setTimeout(() => {
+        fxOverlay.style.display = "none";
+        fxGif.src = "";
+      }, durationMs);
+    }
 
     yesBtn.addEventListener("click", () => {
       localStorage.setItem(KEY, "yes");
       showSuccess(true);
-      burstConfetti();
+      // We now permanently switch the background to the fireworks GIF
+      // instead of showing a big overlay on top of the text.
     });
 
     function showSuccess(animate = true) {
+      noLayer.style.display = "none";
       main.style.display = "none";
       success.style.display = "grid";
       success.querySelector("h2").textContent = SUCCESS_TITLE;
       success.querySelector("p").innerHTML = SUCCESS_TEXT.replaceAll("\n", "<br/>");
+      // 🔥 Switch background to fireworks and hide the cat banner
+      if (FIREWORKS_GIF_URL) {
+        bg.style.backgroundImage = `url('${FIREWORKS_GIF_URL}')`;
+      }
+      if (bannerGif) {
+        bannerGif.style.display = "none";
+      }
       if (animate) flashBuildTag("build: ❤️ shipped", false);
     }
 
@@ -415,67 +513,10 @@ document.addEventListener("keydown", (e) => {
       return Math.sqrt(dx*dx + dy*dy);
     }
 
-    // confetti
-    const canvas = document.getElementById("confetti");
-    const ctx = canvas.getContext("2d");
-
-    function hardResize() {
-      canvas.width = window.innerWidth * devicePixelRatio;
-      canvas.height = window.innerHeight * devicePixelRatio;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
-      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-    }
-    window.addEventListener("resize", hardResize, { passive: true });
-    hardResize();
-
-    let pieces = [];
-    function burstConfetti() {
-      const count = 160;
-      pieces = [];
-      for (let i = 0; i < count; i++) {
-        pieces.push({
-          x: window.innerWidth / 2,
-          y: window.innerHeight / 2,
-          vx: (Math.random() - 0.5) * 10,
-          vy: (Math.random() - 0.8) * 12,
-          g: 0.18 + Math.random() * 0.18,
-          r: 2 + Math.random() * 4,
-          a: 1,
-          spin: (Math.random() - 0.5) * 0.4,
-          rot: Math.random() * Math.PI,
-        });
-      }
-      requestAnimationFrame(tickConfetti);
-    }
-
-    function tickConfetti() {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      let alive = 0;
-      for (const p of pieces) {
-        p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.spin; p.a -= 0.008;
-        if (p.a > 0 && p.y < window.innerHeight + 40) alive++;
-        ctx.save();
-        ctx.globalAlpha = Math.max(p.a, 0);
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        if (Math.random() < 0.25) drawHeart(ctx, 0, 0, p.r * 2.2);
-        else ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
-        ctx.restore();
-      }
-      if (alive > 0) requestAnimationFrame(tickConfetti);
-    }
-
-    function drawHeart(c, x, y, s) {
-      c.beginPath();
-      c.moveTo(x, y + s / 4);
-      c.bezierCurveTo(x, y, x - s / 2, y, x - s / 2, y + s / 4);
-      c.bezierCurveTo(x - s / 2, y + s / 2, x, y + s * 0.75, x, y + s);
-      c.bezierCurveTo(x, y + s * 0.75, x + s / 2, y + s / 2, x + s / 2, y + s / 4);
-      c.bezierCurveTo(x + s / 2, y, x, y, x, y + s / 4);
-      c.closePath();
-      c.fill();
-    }
+    requestAnimationFrame(placeNoInCtaAwayFromYes);
+    window.addEventListener("resize", () => {
+      if (localStorage.getItem(KEY) !== "yes") placeNoInCtaAwayFromYes();
+    }, { passive: true });
   </script>
 </body>
 </html>
