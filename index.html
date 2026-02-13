@@ -239,6 +239,32 @@
     .success p { margin: 0; color: rgba(255,255,255,.78); line-height: 1.55; }
     .big-heart { font-size: 44px; filter: drop-shadow(0 12px 30px rgba(255,77,141,.25)); }
 
+    .reset-btn {
+      margin-top: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.86);
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .18s ease, transform .08s ease, box-shadow .18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.30);
+    }
+    .reset-btn:hover {
+      background: rgba(0,0,0,.32);
+      box-shadow: 0 14px 32px rgba(0,0,0,.36);
+    }
+    .reset-btn:active {
+      transform: translateY(1px) scale(.98);
+      box-shadow: 0 8px 18px rgba(0,0,0,.30);
+    }
+
     /* Keep canvas but we won't use it (safe) */
     canvas#confetti { position: fixed; inset: 0; pointer-events: none; }
 
@@ -325,8 +351,11 @@
         <p class="small">
           <span class="pill">status: committed</span>
           <span class="pill">branch: us</span>
-          <span class="pill">deploy: tonight</span>
+          <span class="pill">deploy: Tomorrow Night & Forever</span>
         </p>
+        <button id="resetBtn" class="reset-btn">
+          <span>run this build again</span> <span>↻</span>
+        </button>
       </div>
 
       <div class="footer">
@@ -360,6 +389,7 @@
 
     const main = document.getElementById("main");
     const success = document.getElementById("success");
+    const resetBtn = document.getElementById("resetBtn");
 
     // Fireworks overlay elements
     const fxOverlay = document.getElementById("fxOverlay");
@@ -490,6 +520,42 @@
         showSuccess(true);
       }, 650);
     });
+
+    // Cute reset: let her rerun the whole experience
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        // Clear stored "yes" so next load shows the first page again
+        localStorage.removeItem(KEY);
+
+        // Smoothly fade out success, then bring main + cat back
+        success.style.opacity = "0";
+        success.style.transform = "translateY(12px)";
+
+        setTimeout(() => {
+          // Restore original background and banner
+          if (BG_IMAGE_URL) {
+            bg.style.backgroundImage = `url('${BG_IMAGE_URL}')`;
+          }
+          if (bannerGif) {
+            bannerGif.style.display = "block";
+          }
+
+          // Swap views
+          success.style.display = "none";
+          main.style.display = "grid";
+          noLayer.style.display = "block";
+
+          // Reset main animation state
+          requestAnimationFrame(() => {
+            main.style.opacity = "1";
+            main.style.transform = "translateY(0)";
+          });
+
+          // Little status wink
+          flashBuildTag("build: rerun requested ↻", false);
+        }, 500);
+      });
+    }
 
     function showSuccess(animate = true) {
       // Update success content
