@@ -33,10 +33,9 @@
       overflow: hidden;
     }
 
-    /* Optional background image/GIF: add your url here */
     .bg {
       position: fixed; inset: 0;
-      background-image: none; /* e.g. url('https://giphy.com/gifs/cat-air-kiss-thrown-blown-63MopWVJ7BcWM4SjXO') */
+      background-image: none;
       background-size: cover;
       background-position: center;
       filter: blur(12px) saturate(1.15) brightness(.65);
@@ -105,6 +104,19 @@
       font-size: 15px;
     }
 
+    /* ✅ Responsive banner that NEVER crops the GIF */
+    .gif-banner{
+      width:100%;
+      height: min(260px, 28vh);  /* grows/shrinks across desktop/phone */
+      object-fit: contain;        /* show full cat */
+      object-position: center;
+      background: rgba(0,0,0,.25);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 12px 28px rgba(0,0,0,.20);
+      display:block;
+    }
+
     .terminal {
       background: rgba(0,0,0,.32);
       border: 1px solid rgba(255,255,255,.10);
@@ -130,15 +142,8 @@
     .cmd { color: rgba(255,255,255,.92); }
     .hint { color: rgba(255,255,255,.65); }
 
-    .cta {
-      display: grid;
-      gap: 12px;
-    }
-
-    .question {
-      font-size: 16px;
-      color: rgba(255,255,255,.88);
-    }
+    .cta { display: grid; gap: 12px; }
+    .question { font-size: 16px; color: rgba(255,255,255,.88); }
 
     .btnrow {
       position: relative;
@@ -173,7 +178,7 @@
     #noBtn {
       background: rgba(255,255,255,.10);
       border: 1px solid rgba(255,255,255,.16);
-      position: absolute; /* lets it jump around within btnrow */
+      position: absolute;
       left: 160px;
       top: 0px;
     }
@@ -199,7 +204,6 @@
       background: rgba(255,255,255,.06);
     }
 
-    /* success screen */
     .success {
       display: none;
       padding: 34px 22px 26px;
@@ -221,24 +225,13 @@
       filter: drop-shadow(0 12px 30px rgba(255,77,141,.25));
     }
 
-    canvas#confetti {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-    }
+    canvas#confetti { position: fixed; inset: 0; pointer-events: none; }
 
     .small {
       font-size: 12px;
       color: rgba(255,255,255,.62);
       margin-top: 8px;
     }
-
-    .link {
-      color: rgba(255,255,255,.80);
-      text-decoration: none;
-      border-bottom: 1px dotted rgba(255,255,255,.35);
-    }
-    .link:hover { color: rgba(255,255,255,.95); }
   </style>
 </head>
 
@@ -261,9 +254,13 @@
         <div class="headline">
           <h1>Hey <span id="herName">love</span>, I shipped a feature 🚀</h1>
           <p class="sub">
-            It passed QA, survived prod, and the only remaining requirement is your approval.
+            It passed QA (dating phase), survived prod (our real life ups & downs), and the only remaining requirement is your approval.
           </p>
         </div>
+
+        <img class="gif-banner"
+             src="https://media.giphy.com/media/63MopWVJ7BcWM4SjXO/giphy.gif"
+             alt="cat kiss" />
 
         <div class="terminal" aria-label="terminal">
           <div class="term-line"><span class="prompt">$</span> <span class="cmd">git checkout -b be-my-valentine</span></div>
@@ -277,9 +274,7 @@
             <button id="yesBtn">Yes 💖</button>
             <button id="noBtn">No 🙃</button>
           </div>
-          <div class="small">
-            P.S. The “No” option is… under active maintenance.
-          </div>
+          <div class="small">P.S. The “No” option is… under active maintenance.</div>
         </div>
       </div>
 
@@ -299,89 +294,71 @@
 
       <div class="footer">
         <div class="pill" id="buildTag">build: v1.0.0</div>
-        <div>
-          <span class="pill">made with ❤️ + a little JS</span>
-        </div>
+        <div><span class="pill">made with ❤️ + a little vibe coding + html</span></div>
       </div>
     </div>
   </div>
 
   <script>
-    /***********************
-     * EASY CUSTOMIZATION
-     ***********************/
-    // 1) Put her name here:
-    const HER_NAME = "Zohal"; // change me (or leave "love")
-    // 2) Optional: add a blurred background image/GIF URL:
-    const BG_IMAGE_URL = ""; // e.g. "https://giphy.com/gifs/cat-air-kiss-thrown-blown-63MopWVJ7BcWM4SjXO"
-    // 3) Optional: change success message:
+    const HER_NAME = "Zohal";
+    const BG_IMAGE_URL = "https://media.giphy.com/media/63MopWVJ7BcWM4SjXO/giphy.gif";
     const SUCCESS_TITLE = "Merge approved.";
     const SUCCESS_TEXT = "Thank you for being my Valentine — our first one together.\nI’m stupid grateful to have you.";
 
-    const herNameEl = document.getElementById("herName");
-    herNameEl.textContent = (HER_NAME || "love");
-
+    document.getElementById("herName").textContent = (HER_NAME || "love");
     const bg = document.getElementById("bg");
     if (BG_IMAGE_URL) bg.style.backgroundImage = `url('${BG_IMAGE_URL}')`;
 
     const typedEl = document.getElementById("typed");
     const cursorEl = document.getElementById("cursor");
-
     const yesBtn = document.getElementById("yesBtn");
     const noBtn = document.getElementById("noBtn");
     const arena = document.getElementById("arena");
-
     const main = document.getElementById("main");
     const success = document.getElementById("success");
 
-    // Persist acceptance (if she refreshes)
     const KEY = "valentineAccepted";
     if (localStorage.getItem(KEY) === "yes") showSuccess(false);
 
-    // Typewriter effect
+    // Dev reset: press R to reset (only on your machine)
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "r") {
+    localStorage.removeItem(KEY);
+    location.reload();
+  }
+});
+
+
     const message = `Initializing romantic-protocol...\nRunning tests: ✅\nFinal prompt: ${HER_NAME || "love"}, will you be my Valentine?`;
     typewriter(message, typedEl, 18);
 
     function typewriter(text, el, speed) {
       let i = 0;
-      const lines = text.split("\n");
-      const full = lines.join("\n");
+      const full = text.split("\n").join("\n");
       const tick = () => {
         i++;
         el.textContent = full.slice(0, i);
-        if (i < full.length) {
-          setTimeout(tick, speed);
-        } else {
-          // blink cursor
-          setInterval(() => cursorEl.style.opacity = (cursorEl.style.opacity === "0" ? "1" : "0"), 520);
-        }
+        if (i < full.length) setTimeout(tick, speed);
+        else setInterval(() => cursorEl.style.opacity = (cursorEl.style.opacity === "0" ? "1" : "0"), 520);
       };
       tick();
     }
 
-    // Keep no button inside the arena
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
     function randomPosition() {
       const rect = arena.getBoundingClientRect();
       const btnRect = noBtn.getBoundingClientRect();
-
       const padding = 6;
       const maxX = rect.width - btnRect.width - padding;
       const maxY = rect.height - btnRect.height - padding;
-
       const x = clamp(Math.random() * maxX, padding, maxX);
       const y = clamp(Math.random() * maxY, padding, maxY);
-
       noBtn.style.left = `${x}px`;
       noBtn.style.top = `${y}px`;
     }
 
-    function clamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
-    }
-
-    // Initialize "No" position after layout
     requestAnimationFrame(() => {
-      // place it to the right of Yes by default
       const yesRect = yesBtn.getBoundingClientRect();
       const arenaRect = arena.getBoundingClientRect();
       const startX = (yesRect.left - arenaRect.left) + yesRect.width + 12;
@@ -389,32 +366,21 @@
       noBtn.style.top = `0px`;
     });
 
-    // Mouse-based "run away" logic
     document.addEventListener("mousemove", (e) => {
       if (localStorage.getItem(KEY) === "yes") return;
       const btnRect = noBtn.getBoundingClientRect();
-      const dist = distanceToRect(e.clientX, e.clientY, btnRect);
-
-      // threshold in px: how close you get before it flees
-      if (dist < 90) randomPosition();
+      if (distanceToRect(e.clientX, e.clientY, btnRect) < 90) randomPosition();
     }, { passive: true });
 
-    // Touch-based "run away" logic for phones
-    // If finger touches near the "No" button, it jumps.
     document.addEventListener("touchstart", (e) => {
       if (localStorage.getItem(KEY) === "yes") return;
       const t = e.touches[0];
       if (!t) return;
       const btnRect = noBtn.getBoundingClientRect();
-      const dist = distanceToRect(t.clientX, t.clientY, btnRect);
-      if (dist < 110) randomPosition();
+      if (distanceToRect(t.clientX, t.clientY, btnRect) < 110) randomPosition();
     }, { passive: true });
 
-    // If she somehow clicks No, make it playful
-    noBtn.addEventListener("click", () => {
-      randomPosition();
-      flashBuildTag("Nice try 😈", true);
-    });
+    noBtn.addEventListener("click", () => { randomPosition(); flashBuildTag("Nice try 😈", true); });
 
     yesBtn.addEventListener("click", () => {
       localStorage.setItem(KEY, "yes");
@@ -449,20 +415,10 @@
       return Math.sqrt(dx*dx + dy*dy);
     }
 
-    /***********************
-     * Confetti (tiny, no libs)
-     ***********************/
+    // confetti
     const canvas = document.getElementById("confetti");
     const ctx = canvas.getContext("2d");
-    let W, H;
-    function resize() {
-      W = canvas.width = window.innerWidth * devicePixelRatio;
-      H = canvas.height = window.innerHeight * devicePixelRatio;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-    }
-    // safer resize without cumulative scaling
+
     function hardResize() {
       canvas.width = window.innerWidth * devicePixelRatio;
       canvas.height = window.innerHeight * devicePixelRatio;
@@ -496,31 +452,17 @@
     function tickConfetti() {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       let alive = 0;
-
       for (const p of pieces) {
-        p.vy += p.g;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rot += p.spin;
-        p.a -= 0.008;
-
+        p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.spin; p.a -= 0.008;
         if (p.a > 0 && p.y < window.innerHeight + 40) alive++;
-
         ctx.save();
         ctx.globalAlpha = Math.max(p.a, 0);
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
-
-        // draw tiny hearts/squares mix
-        if (Math.random() < 0.25) {
-          drawHeart(ctx, 0, 0, p.r * 2.2);
-        } else {
-          ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
-        }
-
+        if (Math.random() < 0.25) drawHeart(ctx, 0, 0, p.r * 2.2);
+        else ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
         ctx.restore();
       }
-
       if (alive > 0) requestAnimationFrame(tickConfetti);
     }
 
