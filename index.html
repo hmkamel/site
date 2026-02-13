@@ -353,9 +353,6 @@
           <span class="pill">branch: us</span>
           <span class="pill">deploy: Tomorrow Night & Forever</span>
         </p>
-        <button id="resetBtn" class="reset-btn">
-          <span>run this build again</span> <span>↻</span>
-        </button>
       </div>
 
       <div class="footer">
@@ -389,7 +386,6 @@
 
     const main = document.getElementById("main");
     const success = document.getElementById("success");
-    const resetBtn = document.getElementById("resetBtn");
 
     // Fireworks overlay elements
     const fxOverlay = document.getElementById("fxOverlay");
@@ -520,42 +516,6 @@
         showSuccess(true);
       }, 650);
     });
-
-    // Cute reset: let her rerun the whole experience
-    if (resetBtn) {
-      resetBtn.addEventListener("click", () => {
-        // Clear stored "yes" so next load shows the first page again
-        localStorage.removeItem(KEY);
-
-        // Smoothly fade out success, then bring main + cat back
-        success.style.opacity = "0";
-        success.style.transform = "translateY(12px)";
-
-        setTimeout(() => {
-          // Restore original background and banner
-          if (BG_IMAGE_URL) {
-            bg.style.backgroundImage = `url('${BG_IMAGE_URL}')`;
-          }
-          if (bannerGif) {
-            bannerGif.style.display = "block";
-          }
-
-          // Swap views
-          success.style.display = "none";
-          main.style.display = "grid";
-          noLayer.style.display = "block";
-
-          // Reset main animation state
-          requestAnimationFrame(() => {
-            main.style.opacity = "1";
-            main.style.transform = "translateY(0)";
-          });
-
-          // Little status wink
-          flashBuildTag("build: rerun requested ↻", false);
-        }, 500);
-      });
-    }
 
     function showSuccess(animate = true) {
       // Update success content
