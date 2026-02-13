@@ -89,6 +89,9 @@
       gap: 18px;
       position: relative;
       z-index: 2;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .9s ease, transform .9s ease;
     }
 
     .headline { display: grid; gap: 8px; }
@@ -228,6 +231,9 @@
       gap: 16px;
       position: relative;
       z-index: 2;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 1s ease, transform 1s ease;
     }
     .success h2 { margin: 0; font-size: clamp(22px, 3vw, 34px); letter-spacing: -0.02em; }
     .success p { margin: 0; color: rgba(255,255,255,.78); line-height: 1.55; }
@@ -473,17 +479,23 @@
 
     yesBtn.addEventListener("click", () => {
       localStorage.setItem(KEY, "yes");
-      showSuccess(true);
-      // We now permanently switch the background to the fireworks GIF
-      // instead of showing a big overlay on top of the text.
+
+      // Start smooth transition: fade & slide main out
+      noLayer.style.display = "none";
+      main.style.opacity = "0";
+      main.style.transform = "translateY(-10px)";
+
+      // Slight delay to let the fade-out start, then swap views
+      setTimeout(() => {
+        showSuccess(true);
+      }, 650);
     });
 
     function showSuccess(animate = true) {
-      noLayer.style.display = "none";
-      main.style.display = "none";
-      success.style.display = "grid";
+      // Update success content
       success.querySelector("h2").textContent = SUCCESS_TITLE;
       success.querySelector("p").innerHTML = SUCCESS_TEXT.replaceAll("\n", "<br/>");
+
       // 🔥 Switch background to fireworks and hide the cat banner
       if (FIREWORKS_GIF_URL) {
         bg.style.backgroundImage = `url('${FIREWORKS_GIF_URL}')`;
@@ -491,6 +503,15 @@
       if (bannerGif) {
         bannerGif.style.display = "none";
       }
+
+      // Show success and animate it in
+      main.style.display = "none";
+      success.style.display = "grid";
+      requestAnimationFrame(() => {
+        success.style.opacity = "1";
+        success.style.transform = "translateY(0)";
+      });
+
       if (animate) flashBuildTag("build: ❤️ shipped", false);
     }
 
